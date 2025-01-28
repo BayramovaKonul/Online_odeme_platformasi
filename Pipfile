@@ -5,6 +5,11 @@ name = "pypi"
 
 [packages]
 django = "==5.1.5"
+django-environ = "==0.9.0"
+django-phonenumber-field = "*"
+phonenumbers = "*"
+django-autoslug = "==1.9.9"
+djangorestframework-simplejwt = "==5.4.0"
 
 [dev-packages]
 psycopg2 = "*"
