@@ -3,7 +3,7 @@ from autoslug import AutoSlugField
 
 class ProjectsModel(models.Model):
 
-    PROJECT_TYPE_CHOICES = [
+    PAYMENT_TYPES = [
     ('mobile', 'Mobile'),
     ('bank', 'Government Payments'),
     ('internet', 'Internet'),
@@ -13,7 +13,7 @@ class ProjectsModel(models.Model):
  
     name = models.CharField(max_length=100, unique=True)
     slug = AutoSlugField(populate_from="name")
-    type = models.CharField(max_length=50, choices=PROJECT_TYPE_CHOICES)
+    type = models.CharField(max_length=50, choices=PAYMENT_TYPES)
     started_at = models.DateField(auto_now_add=True) 
     updated_at = models.DateField(auto_now=True) 
 

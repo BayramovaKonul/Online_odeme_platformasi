@@ -46,7 +46,9 @@ INSTALLED_APPS = [
 
     # installed apps
     'rest_framework_simplejwt',
-    
+    'rest_framework',
+
+
 ]
 
 MIDDLEWARE = [
@@ -134,6 +136,15 @@ AUTH_USER_MODEL = 'account.CustomUserModel'
 
 
 REST_FRAMEWORK = {
+
+    # Use JWT for authentication
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

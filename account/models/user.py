@@ -1,10 +1,7 @@
 from django.db import models
-from phonenumber_field.modelfields import PhoneNumberField
-from phonenumbers import parse, format_number, NumberParseException, PhoneNumberFormat
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from django.contrib.auth.base_user import BaseUserManager
-from ..validators import validate_phone_number
 from .user_groups import UserGroupModel
 
 def get_default_group():
@@ -26,10 +23,7 @@ class CustomUserManager(BaseUserManager):
         if not surname:
             raise ValueError("The Surname must be set")
         
-        # Validate and normalize the phone number
-        #phone_number = validate_phone_number(phone_number)
         user = self.model(phone_number=phone_number, name=name, surname=surname, **extra_fields)
-        # hash password
         user.set_password(password) 
         user.save()
         return user
@@ -48,9 +42,10 @@ class CustomUserManager(BaseUserManager):
     
     
 class CustomUserModel(AbstractBaseUser, PermissionsMixin):
-    phone_number=PhoneNumberField(region="AZ",unique=True, db_index=True)
+    phone_number=models.CharField(max_length=13,unique=True, db_index=True)
     name = models.CharField(max_length=100)
     surname = models.CharField(max_length=100)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)

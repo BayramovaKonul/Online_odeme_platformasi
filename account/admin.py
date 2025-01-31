@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUserModel, UserGroupModel
+from .models import CustomUserModel, UserGroupModel, UserProfileModel
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUserModel
@@ -31,9 +31,17 @@ admin.site.register(CustomUserModel, CustomUserAdmin)
 
 
 @admin.register(UserGroupModel)
-class UserGroupAdmin(admin.ModelAdmin):
+class CustomUserGroupAdmin(admin.ModelAdmin):
     list_display = ['name']
     list_display_links = ['name'] 
-    filter_horizontal = ('groups',)
+    filter_horizontal = ['permissions'] 
+
+@admin.register(UserProfileModel)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user__phone_number', 'birthday', 'email', 'address']
+    list_display_links = ['user__phone_number'] 
+    search_fields = ['user__phone_number'] 
+    list_filter = ['birthday']
+    
 
   

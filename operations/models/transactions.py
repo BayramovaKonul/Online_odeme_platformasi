@@ -7,14 +7,16 @@ class TransactionModel(models.Model):
     ('pending', 'Pending'),
     ('completed', 'Completed'),
     ('failed', 'Failed'),
-    ('canceled', 'Canceled')
 ]
  
     sender = models.ForeignKey(CustomUserModel, on_delete=models.CASCADE, related_name="sender")
-    receiver = models.ForeignKey(CustomUserModel, on_delete=models.CASCADE, related_name="receiver")
+    receiver = models.ForeignKey(CustomUserModel, on_delete=models.CASCADE, related_name="receiver", null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status=models.CharField(choices=STATUS_CHOICES, default="pending")
-    transaction_date = models.DateField(auto_now_add=True) 
+    transaction_type= models.CharField(max_length=50)
+    status=models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    current_stage = models.IntegerField(default=0)
+    created_at = models.DateField(auto_now_add=True) 
+    completed_at = models.DateField(null=True, blank=True) 
     
 
     class Meta:

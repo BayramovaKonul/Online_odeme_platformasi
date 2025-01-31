@@ -11,7 +11,7 @@ class ProjectsAdmin(admin.ModelAdmin):
 
 @admin.register(TransactionModel)
 class TransactionsAdmin(admin.ModelAdmin):
-    list_display = ['sender__phone_number', 'receiver__phone_number', 'transaction_date']
+    list_display = ['sender__phone_number', 'receiver__phone_number', 'completed_at']
     list_display_links = ['sender__phone_number'] 
     search_fields = ['sender__phone_number', 'receiver__phone_number'] 
-    list_filter = ['transaction_date', 'status']
+    list_filter = ['created_at', 'completed_at', 'status']
