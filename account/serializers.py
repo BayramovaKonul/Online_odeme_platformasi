@@ -54,39 +54,27 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         raise serializers.ValidationError("Invalid phone number format. Use +994XXXXXXXXX, 05XXXXXXXX, or 5XXXXXXXX.")
 
-        
-class UserBaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUserModel
-        fields = ['name', 'surname']
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
-    user = UserBaseSerializer()
- 
+    name = serializers.CharField(source='user.name', required=False)
+    surname = serializers.CharField(source='user.surname', required=False)
     class Meta:
         model= UserProfileModel
-        fields =['birthday', 'address', 'email', 'user']
+        fields =['birthday', 'address', 'email', 'name', 'surname']
 
 
     def update(self, instance, validated_data):
-        # Extract nested user data and collect them together
-        user_data = validated_data.pop('user', None)
-        print(user_data)
-        
-        # print(user_data)
-        
-        # Update the UserProfileModel instance
+        # Extract user data from validated_data
+        user_data = validated_data.pop('user', {})
+        # Update UserProfileModel
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
-        # Update the related CustomUserModel instance
-        if user_data:
-            custom_user = instance.user  # Get the associated CustomUser instance
-            custom_user.name = user_data.get('name', custom_user.name)
-            custom_user.surname = user_data.get('surname', custom_user.surname)
-            custom_user.save()
-
+        # Update CustomUserModel
+        user = instance.user
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        user.save()
         return instance
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

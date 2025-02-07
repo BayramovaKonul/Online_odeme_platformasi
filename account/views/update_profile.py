@@ -7,7 +7,7 @@ from rest_framework import status
 
 class UpdateUserProfile(APIView):
     def patch(self, request):
-        print("Incoming request data:", request.data)  # Debugging: Check the request data
+        print("Incoming request data:", request.data)  
         user_profile = request.user.profile # profile is a related name
         # Initialize the serializer
         serializer = UserProfileUpdateSerializer(instance=user_profile, data=request.data, partial=True)

@@ -8,23 +8,6 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from django.utils import timezone
 
-class StartTransferSerializer(serializers.Serializer):
-    def create(self, validated_data):
-        request = self.context['request']
-        sender = request.user  
-        
-        transaction = TransactionModel.objects.create(
-            sender=sender,
-            status="pending",
-            transaction_type="transfer",
-            amount=0
-        )
-        
-        # Store transaction_id in session
-        request.session['transaction_id'] = transaction.id
-        self.context['transaction'] = transaction
-        return transaction 
-
 class CheckAccountSerializer(serializers.Serializer):
     phone_number = serializers.CharField()
     
@@ -45,20 +28,23 @@ class CheckAccountSerializer(serializers.Serializer):
         request = self.context['request']
         sender = request.user  # Get the authenticated user
 
-        transaction_id = request.session.get('transaction_id')
-        transaction = get_object_or_404(TransactionModel, id=transaction_id, sender=sender)
+        transaction = TransactionModel.objects.create(
+            sender=sender,
+            receiver=recipient,
+            status="pending",
+            transaction_type="transfer",
+            current_stage=1,
+            amount=0
+        )
 
-        transaction.receiver = recipient
-        print("transer recipient", recipient)
-        transaction.current_stage=1
-        transaction.save()
-
-
-        # Pass recipient and transaction to context
+        # Store in context for use in the view
         self.context['recipient'] = recipient
         self.context['transaction'] = transaction
 
-        return attrs 
+        return {
+            "phone_number": phone_number,
+            "transaction_id": transaction.transaction_id
+        }
     
     def normalize_phone_number(self, value):
         """Normalize phone number to +994XXXXXXXXX format."""
@@ -74,17 +60,22 @@ class CheckAccountSerializer(serializers.Serializer):
     
 class CheckBalanceSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    
-    def validate_amount(self, amount):
+    transaction_id = serializers.UUIDField()
+
+    def validate(self, attrs):
         request = self.context['request']
         user = request.user 
-        # Retrieve transaction from session
-        transaction_id = request.session.get('transaction_id')
-        transaction = get_object_or_404(TransactionModel, id=transaction_id, sender=user)
+
+        transaction_id = attrs.get('transaction_id')
+        print(transaction_id)
+        transaction = get_object_or_404(TransactionModel, transaction_id=transaction_id, sender=user)
+        print(transaction)
 
         # Ensure we are at stage 1
         if transaction.current_stage != 1:
             return Response({'error': 'Invalid transaction stage'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        amount = attrs.get('amount')
 
         if amount < 0:
             raise serializers.ValidationError("The requested amount can not be less than zero")
@@ -97,30 +88,37 @@ class CheckBalanceSerializer(serializers.Serializer):
         transaction.current_stage = 2 
         transaction.save()
 
-        # Store amount in session
-        request.session['amount'] = str(amount)
 
-        return amount
+        attrs["transaction"] = transaction
+        attrs["amount"] = amount
+        self.context['transaction'] = transaction
+
+        return attrs
     
 class ConfirmTransferSerializer(serializers.Serializer):
+    transaction_id = serializers.UUIDField()
 
-    def save(self):
-
+    def validate(self, attrs):
         request = self.context['request']
-        # recipient=self.context['recipient']
-        amount=self.context['amount']
-
         user = request.user
 
-        
-        transaction_id = request.session.get('transaction_id')
-        current_transaction = get_object_or_404(TransactionModel, id=transaction_id, sender=user)
+        transaction_id = attrs.get('transaction_id')
+        current_transaction = get_object_or_404(TransactionModel, transaction_id=transaction_id, sender=user)
         
         if current_transaction.current_stage != 2:
             raise serializers.ValidationError("Invalid transaction stage")
         
-        recipient=current_transaction.receiver
-            
+        attrs['transaction'] = current_transaction
+        return attrs
+
+    def save(self, **kwargs):
+        request = self.context['request']
+        user = request.user
+        current_transaction = self.validated_data['transaction']
+        
+        recipient = current_transaction.receiver
+        amount = current_transaction.amount
+
         with transaction.atomic():
             # Update balances
             user.balance -= amount
@@ -131,16 +129,15 @@ class ConfirmTransferSerializer(serializers.Serializer):
 
             current_transaction.status = "completed"  # Mark as completed after the transfer
             current_transaction.current_stage = 3  # Mark stage as 3 (confirmation stage)
-            current_transaction.completed_at=timezone.now()
+            current_transaction.completed_at = timezone.now()
             current_transaction.save()
         
-
         # Return response data with updated balances and transaction details
         return {
+            "transaction_id": str(current_transaction.transaction_id),
             "sender_balance": user.balance,
             "recipient_balance": recipient.balance,
             "transaction_type": "transfer",
             "transaction_status": "completed",
             "transaction_stage": 3,
-
         }

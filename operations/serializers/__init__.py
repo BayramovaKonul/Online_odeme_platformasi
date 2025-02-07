@@ -1,1 +1,3 @@
-from .transfer_money import StartTransferSerializer, CheckAccountSerializer, CheckBalanceSerializer, ConfirmTransferSerializer
+from .transfer_money import CheckAccountSerializer, CheckBalanceSerializer, ConfirmTransferSerializer
+from .payment import AddPaymentInputSerializer, AddPaymentAmountSerializer, ConfirmPaymentSerializer
+from .transfers import AddAmountSerializer, AddAccountSerializer, ConfirmTransactionSerializer

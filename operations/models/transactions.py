@@ -1,6 +1,6 @@
 from django.db import models
 from account.models import CustomUserModel
-
+import uuid
 class TransactionModel(models.Model):
 
     STATUS_CHOICES = [
@@ -13,10 +13,11 @@ class TransactionModel(models.Model):
     receiver = models.ForeignKey(CustomUserModel, on_delete=models.CASCADE, related_name="receiver", null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_type= models.CharField(max_length=50)
+    transaction_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     status=models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     current_stage = models.IntegerField(default=0)
-    created_at = models.DateField(auto_now_add=True) 
-    completed_at = models.DateField(null=True, blank=True) 
+    created_at = models.DateTimeField(auto_now_add=True) 
+    completed_at = models.DateTimeField(null=True, blank=True) 
     
 
     class Meta:

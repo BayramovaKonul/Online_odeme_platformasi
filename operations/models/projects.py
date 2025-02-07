@@ -1,19 +1,11 @@
 from django.db import models
 from autoslug import AutoSlugField
+from .payment_types import PaymentTypesModel
 
 class ProjectsModel(models.Model):
 
-    PAYMENT_TYPES = [
-    ('mobile', 'Mobile'),
-    ('bank', 'Government Payments'),
-    ('internet', 'Internet'),
-    ('phone', 'Phone'),
-    ('betting', 'Betting')
-]
- 
     name = models.CharField(max_length=100, unique=True)
-    slug = AutoSlugField(populate_from="name")
-    type = models.CharField(max_length=50, choices=PAYMENT_TYPES)
+    type = models.ForeignKey(PaymentTypesModel, on_delete=models.CASCADE, related_name="projects")
     started_at = models.DateField(auto_now_add=True) 
     updated_at = models.DateField(auto_now=True) 
 
